@@ -85,6 +85,32 @@ test("suppresses an allowed candidate if a human resumes before the agent starts
   ]);
 });
 
+test("lets the human discard a ready intervention before it speaks", () => {
+  let state = createGateState();
+  state = apply(
+    state,
+    { type: "human_speech_started", at: 0 },
+    { type: "human_speech_ended", at: 1_000 },
+    { type: "candidate_ready", at: 1_050, candidateId: "optional-idea" },
+    { type: "tick", at: 1_900 },
+  );
+
+  const discarded = transition(state, {
+    type: "candidate_discarded",
+    at: 1_910,
+    candidateId: "optional-idea",
+  });
+  assert.equal(discarded.state.phase, "idle");
+  assert.equal(discarded.state.candidate, undefined);
+  assert.deepEqual(discarded.state.lastDecision, {
+    kind: "suppressed",
+    at: 1_910,
+    candidateId: "optional-idea",
+    reason: "human_dismissed",
+  });
+  assert.deepEqual(discarded.actions, []);
+});
+
 test("cancels speech immediately when a human interrupts the agent", () => {
   let state = createGateState();
   state = apply(

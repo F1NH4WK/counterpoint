@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Counterpoint Meet Spike",
+  "version": "0.1.0",
+  "description": "Timing-aware voice cofacilitator for Google Meet brainstorming.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "activeTab",
+    "offscreen",
+    "sidePanel",
+    "tabCapture"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "action": {
+    "default_title": "Start Counterpoint capture"
+  },
+  "background": {
+    "service_worker": "dist/extension/src/background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}

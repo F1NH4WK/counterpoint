@@ -7,7 +7,7 @@
 | Recurso | Arquivo de referência | Uso possível em Counterpoint |
 | --- | --- | --- |
 | Sessão de voz Realtime por WebRTC | `../cloud9/apps/web/src/app/voice/page.tsx` | Base para cliente de voz, adaptada para a extensão. |
-| Token efêmero Realtime | `../cloud9/apps/web/src/app/api/realtime-token/route.ts` | Base para endpoint server-side de sessão. |
+| Token efêmero Realtime | `../cloud9/apps/web/src/app/api/realtime-token/route.ts` | Referência histórica de fronteira server-side; Counterpoint usa o relay SDP atual em `server/src/realtime.ts`. |
 | Proxy Exa no servidor | `../cloud9/apps/web/src/app/api/search/route.ts` e `../cloud9/packages/agent-core/src/capabilities/search.ts` | Base para pesquisa externa com chave protegida. |
 
 ## O que não será copiado

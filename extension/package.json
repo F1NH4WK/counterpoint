@@ -3,5 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Chrome extension that hosts Counterpoint in a Google Meet conversation."
+  "description": "Chrome extension that hosts Counterpoint in a Google Meet conversation.",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit"
+  }
 }

@@ -13,11 +13,15 @@
     "shared"
   ],
   "scripts": {
+    "build:extension": "npm run build --workspace @counterpoint/extension",
+    "dev:server": "npm run dev --workspace @counterpoint/server",
+    "start:server": "npm run start --workspace @counterpoint/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "verify": "npm run typecheck && npm test"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.322",
     "@types/node": "^22.10.0",
     "tsx": "^4.20.5",
     "typescript": "^5.7.0"

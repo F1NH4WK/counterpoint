@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Counterpoint</title>
+    <link rel="stylesheet" href="./sidepanel.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Counterpoint · Meet spike</p>
+      <h1>Timing-aware cofacilitator</h1>
+
+      <section class="card" aria-live="polite">
+        <h2>Meet tab audio</h2>
+        <p id="capture-detail" class="detail">Open a Google Meet tab and click the extension icon.</p>
+        <div class="row"><span>Status</span><strong id="capture-status">Idle</strong></div>
+        <div class="row"><span>Audio level</span><strong id="level">0.000</strong></div>
+        <div class="row"><span>Activity</span><strong id="activity">—</strong></div>
+      </section>
+
+      <section class="card agent-card" aria-live="polite">
+        <h2>Counterpoint</h2>
+        <p id="agent-detail" class="detail">Start capture first. Then explicitly start the voice cofacilitator.</p>
+        <div class="row"><span>Agent</span><strong id="agent-status">Idle</strong></div>
+        <div class="row"><span>Mode</span><strong id="agent-mode">—</strong></div>
+        <div class="row"><span>Turn gate</span><strong id="gate">Idle</strong></div>
+        <p class="label">Latest intervention</p>
+        <p id="intervention" class="intervention">—</p>
+        <div class="actions decision-actions">
+          <button id="speak-candidate" type="button" disabled>Speak locally</button>
+          <button id="research-candidate" class="secondary" type="button" disabled>Research evidence</button>
+          <button id="discard-candidate" class="secondary" type="button" disabled>Discard suggestion</button>
+        </div>
+        <p class="label">Spoken transcript</p>
+        <p id="transcript" class="transcript">—</p>
+        <div class="actions">
+          <button id="start-agent" type="button" disabled>Start voice cofacilitator</button>
+          <button id="stop-agent" class="secondary" type="button" disabled>Stop agent</button>
+        </div>
+      </section>
+
+      <section class="card evidence-card" aria-live="polite">
+        <h2>Evidence</h2>
+        <p id="evidence-detail" class="detail">Research is available when Counterpoint has a suggestion ready for review.</p>
+        <div class="row"><span>Status</span><strong id="evidence-status">Idle</strong></div>
+        <ul id="evidence-sources" class="evidence-sources"><li>—</li></ul>
+      </section>
+
+      <section class="card demo-card">
+        <h2>Safe demo</h2>
+        <p class="detail">Runs a canned opening, suggestion, and clearly labelled demo evidence. No Meet audio, API key, or network request is needed.</p>
+        <button id="run-demo" class="secondary" type="button">Run demo scenario</button>
+      </section>
+
+      <p class="note">
+        Capture stays local until you explicitly start the cofacilitator. After that, tab audio is sent to OpenAI through your local Counterpoint server; nothing is recorded by this extension. Evidence only uses Exa after its integration is configured.
+      </p>
+      <button id="stop-capture" class="secondary" type="button" disabled>Stop capture</button>
+    </main>
+    <script type="module" src="./dist/extension/src/sidepanel.js"></script>
+  </body>
+</html>

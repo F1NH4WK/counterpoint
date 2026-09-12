@@ -3,5 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Server-only routes for Counterpoint credentials and integrations."
+  "description": "Server-only routes for Counterpoint credentials and integrations.",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../.env --import tsx src/index.ts",
+    "start": "node --env-file-if-exists=../.env --import tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  }
 }

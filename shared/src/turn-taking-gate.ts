@@ -19,7 +19,8 @@ export type GatePhase = "idle" | "listening" | "holding" | "opening" | "speaking
 
 export type SuppressionReason =
   | "candidate_expired"
-  | "human_resumed_before_agent_started";
+  | "human_resumed_before_agent_started"
+  | "human_dismissed";
 
 export type Decision =
   | { kind: "allowed"; at: number; candidateId: string; silenceMs: number }
@@ -35,6 +36,7 @@ export type GateEvent =
   | { type: "human_speech_started"; at: number }
   | { type: "human_speech_ended"; at: number }
   | { type: "candidate_ready"; at: number; candidateId: string }
+  | { type: "candidate_discarded"; at: number; candidateId: string }
   | { type: "agent_audio_started"; at: number; candidateId: string }
   | { type: "agent_audio_ended"; at: number; candidateId: string }
   | { type: "tick"; at: number };
@@ -134,6 +136,28 @@ export function transition(
         ...state,
         candidate: { id: event.candidateId, createdAt: event.at },
         phase: state.humanIsSpeaking ? "holding" : "holding",
+      };
+      break;
+    }
+
+    case "candidate_discarded": {
+      if (!state.candidate || state.candidate.id !== event.candidateId) {
+        throw new Error("Only the current turn-taking candidate may be discarded.");
+      }
+      if (state.phase === "speaking") {
+        throw new Error("An active audio response cannot be discarded; cancel it instead.");
+      }
+
+      state = {
+        ...state,
+        candidate: undefined,
+        phase: state.humanIsSpeaking ? "listening" : "idle",
+        lastDecision: {
+          kind: "suppressed",
+          at: event.at,
+          candidateId: event.candidateId,
+          reason: "human_dismissed",
+        },
       };
       break;
     }

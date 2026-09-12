@@ -10,18 +10,18 @@ O detector local transforma o áudio em eventos de `speech_started` e `speech_en
 
 ## 3. Compreensão da discussão
 
-O agente mantém um resumo curto da discussão e identifica hipóteses, premissas, consenso, risco e alternativas. Ele cria uma sugestão candidata, não uma interrupção automática.
+Após o segundo consentimento da pessoa usuária, o `offscreen document` abre WebRTC e encaminha o áudio da aba ao Realtime pelo relay local. O agente mantém o contexto recente e cria uma sugestão candidata em texto, não uma interrupção automática.
 
 ## 4. Evidência
 
 - Contexto imediato: o que acabou de ser dito.
-- Contexto interno: consulta MCP somente leitura, quando configurada e pertinente.
 - Evidência externa: Exa apenas sob pedido ou quando o grupo pede validação factual.
+- Contexto interno via MCP está fora desta spike e será adicionado somente como conector de leitura, depois da validação do fluxo principal.
 
 ## 5. Controle humano
 
-Na sidebar, a equipe pode ignorar, pesquisar, pedir uma alternativa ou convidar o agente a falar. A intervenção proativa é limitada por cooldown e expira rapidamente.
+Na sidebar, a pessoa facilitadora pode ver a intervenção, descartá-la, pesquisar evidência ou convidar o agente a falar localmente. A intervenção proativa expira rapidamente; a fala não começa automaticamente. Nesta spike, a saída de voz é local à pessoa que instalou a extensão.
 
 ## 6. Resultado demonstrável
 
-O painel mostra `listening`, `holding`, `opening`, `speaking` ou `suppressed`, o motivo da última decisão e a latência entre abertura detectada e primeira saída de áudio.
+O painel mostra `listening`, `holding`, `ready` ou `speaking`, a sugestão sob revisão e o estado da evidência. O modo demo reproduz esse fluxo sem dependências externas; a demonstração ao vivo mede a passagem entre abertura detectada e ação humana.
