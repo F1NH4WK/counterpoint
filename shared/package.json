@@ -1,0 +1,11 @@
+{
+  "name": "@counterpoint/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure domain logic and contracts shared by Counterpoint components.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "counterpoint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A timing-aware brainstorming cofacilitator for live Google Meet conversations.",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "extension",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "verify": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.7.0"
+  }
+}
