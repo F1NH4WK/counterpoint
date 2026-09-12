@@ -4,6 +4,7 @@ Aqui ficará a parte que define o produto, sem dependência de Chrome, React, Op
 
 - eventos de fala e silêncio;
 - gate de turn-taking;
+- harness do agente: política de rascunho, fala, pesquisa e aprovação humana;
 - contratos de sugestão, evidência e decisão;
 - regras de vencimento, supressão e interrupção.
 

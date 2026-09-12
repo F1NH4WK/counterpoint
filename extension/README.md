@@ -6,7 +6,7 @@ Esta é a superfície do usuário no MVP: uma sidebar de uma aba Google Meet. El
 
 - Captura de áudio da aba, sem iniciar automaticamente e sem silenciar a chamada local.
 - Detector local de fala/silêncio.
-- Conexão WebRTC do `offscreen document` ao backend local, que faz o relay seguro para OpenAI Realtime.
+- Conexão WebRTC somente de áudio do `offscreen document` ao backend local. O servidor mantém o `RealtimeAgent`/`RealtimeSession` sideband; a extensão não cria data channel nem recebe eventos brutos do provedor.
 - Gate determinístico compartilhado: uma sugestão é rascunhada em texto, expira se ficar velha e só fica **elegível para revisão** após uma abertura; uma fala humana cancela imediatamente o áudio já iniciado.
 - Controles explícitos para falar localmente, pesquisar evidência ou descartar uma sugestão. Não há fala automática.
 - Sidebar com estados de captura, agente, gate, intervenção, evidência e transcrição da fala do agente.

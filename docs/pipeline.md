@@ -10,7 +10,7 @@ O detector local transforma o áudio em eventos de `speech_started` e `speech_en
 
 ## 3. Compreensão da discussão
 
-Após o segundo consentimento da pessoa usuária, o `offscreen document` abre WebRTC e encaminha o áudio da aba ao Realtime pelo relay local. O agente mantém o contexto recente e cria uma sugestão candidata em texto, não uma interrupção automática.
+Após o segundo consentimento da pessoa usuária, o `offscreen document` abre WebRTC somente de áudio e encaminha a aba ao Realtime pelo relay local. O servidor cria o `RealtimeAgent` e o `RealtimeSession` do Agents SDK em um WebSocket sideband; o navegador não recebe eventos do provedor. O harness cria uma sugestão candidata em texto, não uma interrupção automática. `PASS`, texto vazio e sugestões fora do envelope curto são silêncio.
 
 ## 4. Evidência
 
@@ -20,7 +20,7 @@ Após o segundo consentimento da pessoa usuária, o `offscreen document` abre We
 
 ## 5. Controle humano
 
-Na sidebar, a pessoa facilitadora pode ver a intervenção, descartá-la, pesquisar evidência ou convidar o agente a falar localmente. A intervenção proativa expira rapidamente; a fala não começa automaticamente. Nesta spike, a saída de voz é local à pessoa que instalou a extensão.
+Na sidebar, a pessoa facilitadora pode ver a intervenção, descartá-la, pesquisar evidência ou convidar o agente a falar localmente. Pesquisa e fala requerem simultaneamente candidato atual, abertura do gate e clique explícito; a intervenção proativa expira rapidamente; a fala não começa automaticamente. Nesta spike, a saída de voz é local à pessoa que instalou a extensão.
 
 ## 6. Resultado demonstrável
 

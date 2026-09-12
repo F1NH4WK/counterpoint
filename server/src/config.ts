@@ -16,7 +16,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): Counte
     host: environment.COUNTERPOINT_HOST?.trim() || "127.0.0.1",
     port: readPort(environment.COUNTERPOINT_PORT),
     openAiApiKey: nonEmpty(environment.OPENAI_API_KEY),
-    realtimeModel: environment.OPENAI_REALTIME_MODEL?.trim() || "gpt-realtime",
+    realtimeModel: environment.OPENAI_REALTIME_MODEL?.trim() || "gpt-realtime-2.1",
     realtimeVoice: environment.OPENAI_REALTIME_VOICE?.trim() || "alloy",
     allowedOrigins: splitOrigins(environment.COUNTERPOINT_ALLOWED_ORIGINS),
     allowAnyChromeExtension: environment.COUNTERPOINT_ALLOW_ANY_CHROME_EXTENSION === "true",

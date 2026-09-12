@@ -12,66 +12,29 @@ export interface RealtimeCallResult {
   location?: string;
 }
 
-interface RealtimeSession {
+/**
+ * The session object sent with the browser's WebRTC offer. It is produced by
+ * the Agents SDK sideband session, rather than recreated in this transport
+ * adapter, so the two control planes cannot drift.
+ */
+export interface RealtimeCallSession {
   type: "realtime";
-  model: string;
-  instructions: string;
-  output_modalities: ["audio"];
-  max_output_tokens: number;
-  audio: {
-    output: {
-      voice: string;
-    };
-  };
-  turn_detection: {
-    type: "server_vad";
-    create_response: false;
-    interrupt_response: false;
-  };
+  [key: string]: unknown;
 }
 
 const REALTIME_CALLS_URL = "https://api.openai.com/v1/realtime/calls";
 
-export const COUNTERPOINT_REALTIME_INSTRUCTIONS = [
-  "You are Counterpoint, a concise cofacilitator embedded in a brainstorming meeting.",
-  "Give at most one useful intervention: a concrete critique, alternative, or clarifying question.",
-  "Do not interrupt people. The client decides when an opening exists and when to request your response.",
-  "Distinguish evidence from hypotheses, state uncertainty, and never invent internal-company facts.",
-  "Do not claim to have sent a message, changed a document, or taken any external action.",
-].join(" ");
-
-export function buildRealtimeSession(config: CounterpointConfig): RealtimeSession {
-  return {
-    type: "realtime",
-    model: config.realtimeModel,
-    instructions: COUNTERPOINT_REALTIME_INSTRUCTIONS,
-    output_modalities: ["audio"],
-    max_output_tokens: 300,
-    audio: {
-      output: {
-        voice: config.realtimeVoice,
-      },
-    },
-    // Realtime still segments speech for its conversation, but Counterpoint's
-    // local gate is the only component allowed to request an intervention.
-    turn_detection: {
-      type: "server_vad",
-      create_response: false,
-      interrupt_response: false,
-    },
-  };
-}
-
 export async function createRealtimeCall(
   sdp: string,
   config: CounterpointConfig,
+  session: RealtimeCallSession,
   fetchImpl: FetchLike = fetch,
 ): Promise<RealtimeCallResult> {
   if (!config.openAiApiKey) {
     throw new HttpProblem(503, "openai_not_configured", "OPENAI_API_KEY is not configured on the server.");
   }
 
-  const { body, contentType } = encodeCallMultipart(sdp, buildRealtimeSession(config));
+  const { body, contentType } = encodeCallMultipart(sdp, session);
   const response = await fetchImpl(REALTIME_CALLS_URL, {
     method: "POST",
     headers: {
@@ -103,7 +66,7 @@ export async function createRealtimeCall(
 
 export function encodeCallMultipart(
   sdp: string,
-  session: RealtimeSession,
+  session: RealtimeCallSession,
 ): { body: string; contentType: string } {
   const boundary = `----counterpoint-${randomUUID()}`;
   const content = [
@@ -125,4 +88,40 @@ export function encodeCallMultipart(
     body: content,
     contentType: `multipart/form-data; boundary=${boundary}`,
   };
+}
+
+/**
+ * The provider's Call ID is private server-side control-plane state. The
+ * browser only receives an opaque Counterpoint session ID.
+ */
+export function extractRealtimeCallId(location: string | undefined): string {
+  const value = location?.trim();
+  if (!value) {
+    throw new HttpProblem(
+      502,
+      "openai_realtime_missing_call_id",
+      "OpenAI did not return a Realtime call identifier for server-side controls.",
+    );
+  }
+
+  const candidate = readCallIdCandidate(value);
+  if (!candidate || !/^[A-Za-z0-9_-]{8,200}$/.test(candidate)) {
+    throw new HttpProblem(
+      502,
+      "openai_realtime_invalid_call_id",
+      "OpenAI returned an invalid Realtime call identifier.",
+    );
+  }
+  return candidate;
+}
+
+function readCallIdCandidate(location: string): string | undefined {
+  if (/^[A-Za-z0-9_-]+$/.test(location)) return location;
+
+  try {
+    const url = new URL(location, "https://api.openai.com");
+    return url.pathname.split("/").filter(Boolean).at(-1);
+  } catch {
+    return undefined;
+  }
 }

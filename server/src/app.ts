@@ -1,19 +1,22 @@
+import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 import type { CounterpointConfig } from "./config.js";
 import { HttpProblem } from "./errors.js";
-import { createRealtimeCall, type FetchLike } from "./realtime.js";
+import { createRealtimeCall, extractRealtimeCallId, type FetchLike } from "./realtime.js";
 import {
   ExaOnboardingRequiredSearch,
   type EvidenceRequest,
   type EvidenceSearch,
 } from "./research.js";
+import { createVoiceAgentService, type VoiceAgentService } from "./voice-agent.js";
 
 const MAX_JSON_BODY_BYTES = 256 * 1024;
 
 export interface ServerDependencies {
   fetch?: FetchLike;
   evidenceSearch?: EvidenceSearch;
+  voiceAgent?: VoiceAgentService;
   logError?: (error: unknown) => void;
 }
 
@@ -23,11 +26,13 @@ export function createCounterpointServer(
 ): Server {
   const evidenceSearch = dependencies.evidenceSearch ?? new ExaOnboardingRequiredSearch();
   const logError = dependencies.logError ?? console.error;
+  const voiceAgent = dependencies.voiceAgent ?? createVoiceAgentService({ logError });
 
   return createServer((request, response) => {
     void handleRequest(request, response, config, {
       fetch: dependencies.fetch ?? fetch,
       evidenceSearch,
+      voiceAgent,
       logError,
     });
   });
@@ -36,6 +41,7 @@ export function createCounterpointServer(
 interface ResolvedDependencies {
   fetch: FetchLike;
   evidenceSearch: EvidenceSearch;
+  voiceAgent: VoiceAgentService;
   logError: (error: unknown) => void;
 }
 
@@ -66,9 +72,24 @@ async function handleRequest(
 
     if (url.pathname === "/api/realtime/call" && request.method === "POST") {
       const body = await readJson(request);
-      const sdp = readSdp(body);
-      const result = await createRealtimeCall(sdp, config, dependencies.fetch);
-      return sendJson(response, 201, result);
+      const sdp = readAudioOnlySdp(body);
+      const sessionId = randomUUID();
+      const callSession = await dependencies.voiceAgent.prepare(sessionId, config);
+      try {
+        const result = await createRealtimeCall(sdp, config, callSession, dependencies.fetch);
+        await dependencies.voiceAgent.connect(sessionId, extractRealtimeCallId(result.location));
+        // Do not return the provider Location/call ID. The opaque local ID only
+        // authorizes projected Counterpoint controls for this extension session.
+        return sendJson(response, 201, { sdp: result.sdp, sessionId });
+      } catch (error) {
+        dependencies.voiceAgent.close(sessionId);
+        throw error;
+      }
+    }
+
+    const realtimeSessionRoute = readRealtimeSessionRoute(url.pathname);
+    if (realtimeSessionRoute) {
+      return handleRealtimeSessionRoute(request, response, realtimeSessionRoute, dependencies.voiceAgent);
     }
 
     if (url.pathname === "/api/research" && request.method === "POST") {
@@ -115,7 +136,7 @@ function applyCors(
   ) {
     response.setHeader("Access-Control-Allow-Origin", origin);
     response.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Counterpoint-Demo-Token");
-    response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     response.setHeader("Vary", "Origin");
   }
 }
@@ -141,14 +162,90 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-function readSdp(body: unknown): string {
+function readAudioOnlySdp(body: unknown): string {
   if (!isRecord(body) || typeof body.sdp !== "string" || !body.sdp.trim()) {
     throw new HttpProblem(400, "invalid_sdp", "A non-empty SDP offer is required.");
   }
   if (body.sdp.length > 200_000) {
     throw new HttpProblem(413, "sdp_too_large", "SDP offer is too large.");
   }
+
+  const mediaLines = body.sdp
+    .split(/\r?\n/u)
+    .filter((line) => line.startsWith("m="));
+  if (mediaLines.length !== 1 || !/^m=audio\s/u.test(mediaLines[0])) {
+    throw new HttpProblem(
+      400,
+      "invalid_media_offer",
+      "Counterpoint accepts exactly one audio media stream and no browser data channel.",
+    );
+  }
   return body.sdp;
+}
+
+type RealtimeSessionRoute = {
+  sessionId: string;
+  action: "projection" | "draft" | "speak" | "cancel";
+};
+
+function readRealtimeSessionRoute(pathname: string): RealtimeSessionRoute | undefined {
+  const match = /^\/api\/realtime\/sessions\/([A-Za-z0-9-]{16,128})(?:\/(draft|speak|cancel))?$/u.exec(pathname);
+  if (!match) return undefined;
+
+  const action = match[2] ?? "projection";
+  return {
+    sessionId: match[1],
+    action: action as RealtimeSessionRoute["action"],
+  };
+}
+
+async function handleRealtimeSessionRoute(
+  request: IncomingMessage,
+  response: ServerResponse,
+  route: RealtimeSessionRoute,
+  voiceAgent: VoiceAgentService,
+): Promise<void> {
+  if (route.action === "projection" && request.method === "GET") {
+    const projection = voiceAgent.getProjection(route.sessionId);
+    if (!projection) {
+      throw new HttpProblem(404, "realtime_session_not_found", "This Counterpoint voice session no longer exists.");
+    }
+    return sendJson(response, 200, projection);
+  }
+
+  if (route.action === "draft" && request.method === "POST") {
+    voiceAgent.requestDraft(route.sessionId);
+    return sendJson(response, 202, voiceAgent.getProjection(route.sessionId));
+  }
+
+  if (route.action === "speak" && request.method === "POST") {
+    const candidate = readCandidate(await readJson(request));
+    voiceAgent.requestSpeech(route.sessionId, candidate);
+    return sendJson(response, 202, voiceAgent.getProjection(route.sessionId));
+  }
+
+  if (route.action === "cancel" && request.method === "POST") {
+    voiceAgent.cancel(route.sessionId);
+    return sendJson(response, 202, voiceAgent.getProjection(route.sessionId));
+  }
+
+  if (route.action === "projection" && request.method === "DELETE") {
+    voiceAgent.close(route.sessionId);
+    response.writeHead(204).end();
+    return;
+  }
+
+  throw new HttpProblem(405, "method_not_allowed", "This HTTP method is not allowed for the Counterpoint voice session route.");
+}
+
+function readCandidate(body: unknown): string {
+  if (!isRecord(body) || typeof body.candidate !== "string" || !body.candidate.trim()) {
+    throw new HttpProblem(400, "invalid_candidate", "A non-empty candidate is required.");
+  }
+  if (body.candidate.length > 2_000) {
+    throw new HttpProblem(413, "candidate_too_large", "Candidate text is too large.");
+  }
+  return body.candidate;
 }
 
 function readEvidenceRequest(body: unknown): EvidenceRequest {
