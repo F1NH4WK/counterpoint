@@ -1,12 +1,10 @@
 # Counterpoint
 
-**Um cofacilitador de brainstorming que vive em uma conversa do Google Meet.**
-
-Counterpoint escuta uma discussão com consentimento, identifica hipóteses e consensos rápidos, e oferece críticas curtas, alternativas ou evidências quando existe uma abertura social para isso. A equipe controla se a sugestão é ignorada, pesquisada ou falada.
+O Counterpoint é um agente de IA projetado para apoiar reuniões de brainstorming de produtos rápidas e dinâmicas, sem interromper o fluxo da conversa. 
 
 ## O problema
 
-Em brainstorming, ideias costumam ser aprovadas por velocidade, familiaridade ou pela pessoa mais assertiva — não pela qualidade da evidência. Um chat separado perde a conversa e chega tarde. Counterpoint aparece onde a decisão nasce: na reunião.
+O projeto vem para agregar nos brainstormings. As dificuldades comuns como a perda de sugestões, o registro impreciso de decisões e a lentidão causada por tarefas de validação (pesquisa, consulta a documentos internos, busca de precedentes), obrigam a aprovação e tomadas de decisão inadequadas ou estendem prazos de tarefas que poderiam estar finalizadas. 
 
 ## O MVP
 
